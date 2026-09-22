@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+    <title>PT Coach</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html { height: 100%; overflow: hidden; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f8f8; color: #222; height: 100vh; overflow: hidden; }
+        
+        .app-container { display: flex; flex-direction: column; height: 100vh; position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 18px; }
+        .logout-btn { background: rgba(255,255,255,0.3); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+
+        .content { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px; -webkit-overflow-scrolling: touch; padding-bottom: 70px; }
+
+        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; display: flex; border-top: 1px solid #ddd; background: white; flex-shrink: 0; z-index: 100; }
+        .nav-btn { flex: 1; min-width: 60px; padding: 8px 6px; background: white; border: none; cursor: pointer; font-size: 10px; font-weight: 500; color: #999; border-top: 3px solid transparent; white-space: nowrap; text-align: center; }
+        .nav-btn.active { color: #667eea; border-top-color: #667eea; background: #f9f9f9; }
+
+        .login-page { display: flex; justify-content: center; align-items: center; height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; }
+        .login-box { background: white; padding: 30px 20px; border-radius: 12px; width: 100%; max-width: 100%; }
+        .login-box h1 { font-size: 22px; margin-bottom: 10px; text-align: center; }
+        .login-box p { text-align: center; margin-bottom: 20px; color: #666; font-size: 14px; }
+        
+        .button-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        .button-group button { flex: 1; padding: 10px; border: 1px solid #ddd; background: white; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px; }
+        .button-group button.active { background: #667eea; color: white; border-color: #667eea; }
+
+        input, textarea, select { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-family: inherit; -webkit-appearance: none; appearance: none; }
+        textarea { resize: none; height: 60px; }
+        
+        .button { width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px; margin-bottom: 10px; }
+        .button:active { background: #5568d3; }
+        .button.secondary { background: #f0f0f0; color: #333; }
+        .button.success { background: #27ae60; }
+        .button.small { padding: 8px 12px; font-size: 12px; margin-bottom: 0; }
+
+        .error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 12px; }
+        .success { background: #d4edda; color: #155724; padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 12px; }
+
+        .card { background: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .card h2 { font-size: 15px; margin-bottom: 10px; }
+        .card h3 { font-size: 13px; margin: 10px 0 8px 0; font-weight: 600; }
+
+        .notice-board { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 12px; line-height: 1.4; }
+
+        .meal-item { background: #f9f9f9; padding: 10px; border-radius: 6px; margin-bottom: 8px; border-left: 3px solid #667eea; display: flex; justify-content: space-between; align-items: center; }
+        .meal-item-info { flex: 1; }
+        .meal-item-name { font-weight: 600; font-size: 13px; }
+        .meal-item-macros { font-size: 11px; color: #666; margin-top: 3px; }
+        .meal-item-cal { font-weight: 600; color: #667eea; margin: 0 10px; }
+        .meal-item-delete { background: #e74c3c; color: white; border: none; padding: 5px 8px; border-radius: 3px; cursor: pointer; font-size: 12px; }
+
+        .macro-rings { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 15px; }
+        .ring-container { text-align: center; }
+        .ring { width: 70px; height: 70px; margin: 0 auto; position: relative; }
+        .ring svg { width: 100%; height: 100%; }
+        .ring-label { font-size: 10px; color: #999; margin-top: 5px; }
+        .ring-value { font-size: 12px; font-weight: 600; color: #667eea; }
+
+        .macro-bar { display: flex; align-items: center; margin-bottom: 10px; gap: 8px; }
+        .macro-label { font-size: 11px; font-weight: 600; min-width: 60px; }
+        .macro-bg { flex: 1; height: 12px; background: #f0f0f0; border-radius: 3px; overflow: hidden; }
+        .macro-fill { height: 100%; background: #667eea; border-radius: 3px; }
+        .macro-value { font-size: 11px; font-weight: 600; min-width: 50px; text-align: right; }
+
+        .hidden { display: none !important; }
+        .label-text { display: block; font-weight: 600; font-size: 12px; margin-bottom: 8px; margin-top: 8px; }
+
+        .meal-section { background: #f9f9f9; padding: 10px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #667eea; }
+        .meal-section h4 { font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+
+        .loading { text-align: center; padding: 20px; font-size: 12px; color: #999; }
+        .spinner { border: 3px solid #f0f0f0; border-top: 3px solid #667eea; border-radius: 50%; width: 25px; height: 25px; animation: spin 1s linear infinite; margin: 10px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .search-result { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 12px; border-radius: 6px; margin-bottom: 10px; font-size: 12px; }
+        .search-result strong { display: block; margin-bottom: 5px; }
+
+        .cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .cols2 input { margin-bottom: 10px; }
+
+        .stat-box { background: #f8f8f8; padding: 12px; border-radius: 6px; text-align: center; margin-bottom: 10px; }
+        .stat-value { font-size: 22px; font-weight: bold; color: #667eea; }
+        .stat-label { font-size: 11px; color: #999; margin-top: 3px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script>
+        const API_URL = '/api';
+
+        function initData() {
+            if (!localStorage.getItem('ptData')) {
+                const data = {
+                    clients: [{ id: '1', name: 'Client', macroTargets: { calories: 2000, protein: 150, carbs: 200, fat: 65 } }],
+                    noticeBoard: [{ message: 'Welcome! Let\'s crush your goals.', date: new Date().toISOString().split('T')[0] }],
+                    nutrition: [],
+                    steps: [],
+                    weight: []
+                };
+                localStorage.setItem('ptData', JSON.stringify(data));
+            }
+        }
+
+        function getData() { return JSON.parse(localStorage.getItem('ptData') || '{}'); }
+        function saveData(data) { localStorage.setItem('ptData', JSON.stringify(data)); }
+
+        let currentUser = null;
+        let currentFood = null;
+
+        function showLogin() {
+            document.getElementById('root').innerHTML = `
+                <div class="login-page">
+                    <div class="login-box">
+                        <h1>💪 PT Coach</h1>
+                        <p>Track your nutrition & training</p>
+                        <div class="button-group" style="margin-bottom: 20px;">
+                            <button class="active" onclick="setUserType('coach')">Coach</button>
+                            <button onclick="setUserType('client')">Client</button>
+                        </div>
+                        <input type="text" id="username" placeholder="Username" value="coach">
+                        <input type="password" id="password" placeholder="Password" value="password123">
+                        <button class="button" onclick="handleLogin()">Sign In</button>
+                        <p style="margin-top: 15px; font-size: 11px; color: #999; text-align: center;">Demo: coach/password123 or client/password123</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function setUserType(type) {
+            document.querySelectorAll('.button-group button').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('username').value = type;
+        }
+
+        function handleLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            if (username === 'coach' && password === 'password123') {
+                currentUser = { type: 'coach', name: 'Coach' };
+                showCoachDash();
+            } else if (username === 'client' && password === 'password123') {
+                currentUser = { type: 'client', name: 'Client', id: '1' };
+                showClientDash();
+            } else {
+                alert('Invalid credentials');
+            }
+        }
+
+        function logout() { currentUser = null; showLogin(); }
+
+        function showCoachDash() {
+            document.getElementById('root').innerHTML = `
+                <div class="app-container">
+                    <div class="header"><h1>Coach <button class="logout-btn" onclick="logout()">Logout</button></h1></div>
+                    <div class="content" id="content"></div>
+                    <div class="nav-bar">
+                        <button class="nav-btn active" onclick="switchCoachTab('targets')">Targets</button>
+                        <button class="nav-btn" onclick="switchCoachTab('nutrition')">Nutrition</button>
+                        <button class="nav-btn" onclick="switchCoachTab('progress')">Progress</button>
+                    </div>
+                </div>
+            `;
+            window.switchCoachTab = function(tab) {
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                event.target.classList.add('active');
+                renderCoachTab(tab);
+            };
+            renderCoachTab('targets');
+        }
+
+        function renderCoachTab(tab) {
+            const data = getData();
+            const client = data.clients[0];
+            const content = document.getElementById('content');
+            const today = new Date().toISOString().split('T')[0];
+            const meals = data.nutrition.filter(m => m.date === today);
+            const targets = client.macroTargets;
+            const totals = { calories: meals.reduce((s, m) => s + (m.calories || 0), 0), protein: meals.reduce((s, m) => s + (m.protein || 0), 0), carbs: meals.reduce((s, m) => s + (m.carbs || 0), 0), fat: meals.reduce((s, m) => s + (m.fat || 0), 0) };
+
+            if (tab === 'targets') {
+                content.innerHTML = `<div class="card"><h3>Daily Macro Targets</h3>
+                    <div class="cols2"><div><label class="label-text">Calories</label><input type="number" id="targetCal" value="${client.macroTargets.calories}"></div>
+                    <div><label class="label-text">Protein (g)</label><input type="number" id="targetPro" value="${client.macroTargets.protein}"></div></div>
+                    <div class="cols2"><div><label class="label-text">Carbs (g)</label><input type="number" id="targetCarbs" value="${client.macroTargets.carbs}"></div>
+                    <div><label class="label-text">Fat (g)</label><input type="number" id="targetFat" value="${client.macroTargets.fat}"></div></div>
+                    <button class="button" onclick="saveMacroTargets()">Save</button></div>`;
+            } else if (tab === 'nutrition') {
+                const groupedByMealType = {};
+                meals.forEach(m => { const type = m.mealType || 'Other'; if (!groupedByMealType[type]) groupedByMealType[type] = []; groupedByMealType[type].push(m); });
+                content.innerHTML = `<div class="card"><h3>Daily Macro Progress</h3>
+                    ${renderMacroBar('Calories', totals.calories, targets.calories)}
+                    ${renderMacroBar('Protein', totals.protein, targets.protein)}
+                    ${renderMacroBar('Carbs', totals.carbs, targets.carbs)}
+                    ${renderMacroBar('Fat', totals.fat, targets.fat)}
+                    </div><div class="card"><h3>Food Log</h3>
+                    ${meals.length === 0 ? '<p style="color: #999; font-size: 12px;">No meals logged today</p>' : Object.entries(groupedByMealType).map(([type, mealList]) => `
+                        <div class="meal-section"><h4>${type}</h4>
+                        ${mealList.map(m => `<div style="font-size: 11px; margin-bottom: 6px;"><strong>${m.meal}</strong><br>${m.calories}cal | P:${m.protein}g C:${m.carbs}g F:${m.fat}g</div>`).join('')}
+                        </div>`).join('')}
+                    </div>`;
+            }
+        }
+
+        function renderMacroBar(label, actual, target) {
+            const percent = Math.min((actual / target) * 100, 100);
+            return `<div class="macro-bar"><div class="macro-label">${label}</div><div class="macro-bg"><div class="macro-fill" style="width: ${percent}%"></div></div><div class="macro-value">${actual}/${target}</div></div>`;
+        }
+
+        function saveMacroTargets() {
+            const data = getData();
+            data.clients[0].macroTargets = { calories: parseInt(document.getElementById('targetCal').value) || 2000, protein: parseInt(document.getElementById('targetPro').value) || 150, carbs: parseInt(document.getElementById('targetCarbs').value) || 200, fat: parseInt(document.getElementById('targetFat').value) || 65 };
+            saveData(data);
+            alert('✓ Macro targets saved!');
+        }
+
+        function showClientDash() {
+            const data = getData();
+            const notice = data.noticeBoard[0];
+            document.getElementById('root').innerHTML = `
+                <div class="app-container">
+                    <div class="header"><h1>My Nutrition <button class="logout-btn" onclick="logout()">Logout</button></h1></div>
+                    ${notice ? `<div class="notice-board" style="margin: 10px 12px 0 12px;">${notice.message}</div>` : ''}
+                    <div class="content" id="content"></div>
+                    <div class="nav-bar">
+                        <button class="nav-btn active" onclick="switchClientTab('log')">Log Food</button>
+                        <button class="nav-btn" onclick="switchClientTab('nutrition')">Today</button>
+                        <button class="nav-btn" onclick="switchClientTab('macros')">Macros</button>
+                        <button class="nav-btn" onclick="switchClientTab('progress')">Progress</button>
+                    </div>
+                </div>
+            `;
+            window.switchClientTab = function(tab) {
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                event.target.classList.add('active');
+                renderClientTab(tab);
+            };
+            renderClientTab('log');
+        }
+
+        function renderClientTab(tab) {
+            const data = getData();
+            const content = document.getElementById('content');
+            const today = new Date().toISOString().split('T')[0];
+            const meals = data.nutrition.filter(m => m.date === today);
+            const targets = data.clients[0].macroTargets;
+
+            if (tab === 'log') {
+                content.innerHTML = `
+                    <div class="card">
+                        <h3>Search Food</h3>
+                        <label class="label-text">Search by name or barcode:</label>
+                        <input type="text" id="foodSearch" placeholder="e.g. chicken breast, rice, 5000112123456">
+                        <button class="button" onclick="searchFood()">🔍 Search</button>
+                        <div id="searchResult" class="hidden" style="margin-top: 10px;"></div>
+                    </div>
+                    <div class="card" id="mealTypeCard" class="hidden">
+                        <h3>Add to Meal Log</h3>
+                        <label class="label-text">Selected Food:</label>
+                        <div id="selectedFood" style="background: #f9f9f9; padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 12px;"></div>
+                        <label class="label-text">Meal Type:</label>
+                        <select id="mealType">
+                            <option value="Breakfast">Breakfast</option>
+                            <option value="Lunch">Lunch</option>
+                            <option value="Dinner">Dinner</option>
+                            <option value="Snacks">Snacks</option>
+                        </select>
+                        <label class="label-text">Quantity (servings):</label>
+                        <input type="number" id="quantity" placeholder="1" value="1" min="0.5" step="0.5" style="margin-bottom: 10px;">
+                        <button class="button success" onclick="addMeal()">✓ Add to Log</button>
+                        <button class="button secondary" onclick="cancelFood()">Cancel</button>
+                    </div>
+                `;
+                document.getElementById('foodSearch').focus();
+            } else if (tab === 'nutrition') {
+                const totals = { calories: meals.reduce((s, m) => s + (m.calories || 0), 0), protein: meals.reduce((s, m) => s + (m.protein || 0), 0), carbs: meals.reduce((s, m) => s + (m.carbs || 0), 0), fat: meals.reduce((s, m) => s + (m.fat || 0), 0) };
+                const groupedByMealType = {};
+                meals.forEach(m => { const type = m.mealType || 'Other'; if (!groupedByMealType[type]) groupedByMealType[type] = []; groupedByMealType[type].push(m); });
+                content.innerHTML = `<div class="card"><h3>Today's Totals</h3>
+                    <div class="cols2"><div class="stat-box"><div class="stat-value">${totals.calories}</div><div class="stat-label">Calories</div></div>
+                    <div class="stat-box"><div class="stat-value">${totals.protein}g</div><div class="stat-label">Protein</div></div></div>
+                    <div class="cols2"><div class="stat-box"><div class="stat-value">${totals.carbs}g</div><div class="stat-label">Carbs</div></div>
+                    <div class="stat-box"><div class="stat-value">${totals.fat}g</div><div class="stat-label">Fat</div></div></div>
+                    </div><div class="card"><h3>Meals Logged</h3>
+                    ${meals.length === 0 ? '<p style="color: #999; font-size: 12px;">No meals logged yet</p>' : Object.entries(groupedByMealType).map(([type, mealList]) => `
+                        <div class="meal-section"><h4>${type}</h4>
+                        ${mealList.map(m => `<div class="meal-item">
+                            <div class="meal-item-info"><div class="meal-item-name">${m.meal}</div>
+                            <div class="meal-item-macros">P: ${m.protein}g | C: ${m.carbs}g | F: ${m.fat}g</div></div>
+                            <div class="meal-item-cal">${m.calories}cal</div>
+                            <button class="meal-item-delete" onclick="deleteMeal('${m.id}')">×</button>
+                        </div>`).join('')}
+                        </div>`).join('')}
+                    </div>`;
+            } else if (tab === 'macros') {
+                const totals = { calories: meals.reduce((s, m) => s + (m.calories || 0), 0), protein: meals.reduce((s, m) => s + (m.protein || 0), 0), carbs: meals.reduce((s, m) => s + (m.carbs || 0), 0), fat: meals.reduce((s, m) => s + (m.fat || 0), 0) };
+                content.innerHTML = `<div class="card"><h3>Macro Rings</h3>
+                    <div class="macro-rings">
+                        ${renderMacroRing('Protein', totals.protein, targets.protein, '#FF6B6B')}
+                        ${renderMacroRing('Carbs', totals.carbs, targets.carbs, '#4ECDC4')}
+                        ${renderMacroRing('Fat', totals.fat, targets.fat, '#FFE66D')}
+                    </div></div><div class="card"><h3>Progress Bars</h3>
+                    ${renderMacroBar('Calories', totals.calories, targets.calories)}
+                    ${renderMacroBar('Protein', totals.protein, targets.protein)}
+                    ${renderMacroBar('Carbs', totals.carbs, targets.carbs)}
+                    ${renderMacroBar('Fat', totals.fat, targets.fat)}
+                    </div>`;
+            } else if (tab === 'progress') {
+                const weights = data.weight.filter(w => w.clientId === '1');
+                const stepsToday = data.steps.find(s => s.clientId === '1' && s.date === today);
+                content.innerHTML = `<div class="card"><h3>Log Steps Today</h3>
+                    <input type="number" id="stepsInput" placeholder="Steps" value="${stepsToday ? stepsToday.steps : ''}">
+                    <button class="button" onclick="logSteps()">Save Steps</button></div>
+                    <div class="card"><h3>Log Weekly Weight</h3>
+                    <input type="number" id="weightInput" placeholder="Weight (lbs)" value="${weights.filter(w => w.weight).reverse()[0]?.weight || ''}">
+                    <button class="button" onclick="logWeight()">Save Weight</button></div>
+                    <div class="card"><h3>Weight History</h3>
+                    ${weights.length === 0 ? '<p style="color: #999; font-size: 12px;">No entries</p>' : weights.filter(w => w.weight).reverse().map(w => `
+                        <div style="padding: 8px 0; border-bottom: 1px solid #eee; font-size: 12px;">
+                            <strong>${w.date}</strong>: ${w.weight} lbs
+                        </div>`).join('')}</div>`;
+            }
+        }
+
+        function renderMacroRing(label, actual, target, color) {
+            const percent = Math.min((actual / target) * 100, 100);
+            const circumference = 2 * Math.PI * 30;
+            const offset = circumference - (percent / 100) * circumference;
+            return `<div class="ring-container"><div class="ring"><svg viewBox="0 0 70 70">
+                <circle cx="35" cy="35" r="30" fill="none" stroke="#f0f0f0" stroke-width="5"></circle>
+                <circle cx="35" cy="35" r="30" fill="none" stroke="${color}" stroke-width="5" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" transform="rotate(-90 35 35)"></circle>
+                <text x="35" y="40" text-anchor="middle" font-size="14" font-weight="bold" fill="${color}">${Math.round(percent)}%</text>
+            </svg></div><div class="ring-label">${label}</div><div class="ring-value">${actual}/${target}</div></div>`;
+        }
+
+        function searchFood() {
+            const query = document.getElementById('foodSearch').value.trim();
+            if (!query) { alert('Enter food name or barcode'); return; }
+            const searchResult = document.getElementById('searchResult');
+            searchResult.innerHTML = '<div class="loading"><div class="spinner"></div>Searching...</div>';
+            searchResult.classList.remove('hidden');
+
+            fetch(`${API_URL}?action=search_barcode&barcode=${encodeURIComponent(query)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.results && data.results.length > 0) {
+                        handleFoodResult(data.results[0], query);
+                        return;
+                    }
+                    return fetch(`${API_URL}?action=search_food&food=${encodeURIComponent(query)}`).then(r => r.json());
+                })
+                .then(data => {
+                    if (data && data.branded && data.branded.length > 0) {
+                        handleFoodResult(data.branded[0], query);
+                    } else if (data && data.common && data.common.length > 0) {
+                        handleFoodResult(data.common[0], query);
+                    } else if (!currentFood) {
+                        document.getElementById('searchResult').innerHTML = '<div class="error">Food not found. Try different spelling or brand name.</div>';
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('searchResult').innerHTML = '<div class="error">Search failed. Check your internet connection or try again.</div>';
+                });
+        }
+
+        function handleFoodResult(item, query) {
+            currentFood = {
+                name: item.item_name || item.food_name || 'Food',
+                calories: Math.round(item.nf_calories || 0),
+                protein: Math.round(item.nf_protein || 0),
+                carbs: Math.round(item.nf_total_carbohydrate || 0),
+                fat: Math.round(item.nf_total_fat || 0)
+            };
+            document.getElementById('searchResult').innerHTML = `<div class="search-result"><strong>${currentFood.name}</strong><br>${currentFood.calories}cal | P: ${currentFood.protein}g | C: ${currentFood.carbs}g | F: ${currentFood.fat}g</div>`;
+            const selected = document.getElementById('selectedFood');
+            if (selected) {
+                selected.innerHTML = `<strong>${currentFood.name}</strong><br>${currentFood.calories}cal | P: ${currentFood.protein}g | C: ${currentFood.carbs}g | F: ${currentFood.fat}g`;
+            }
+            document.getElementById('mealTypeCard').classList.remove('hidden');
+            document.getElementById('quantity').value = '1';
+        }
+
+        function addMeal() {
+            if (!currentFood) { alert('Search for a food first'); return; }
+            const data = getData();
+            const mealType = document.getElementById('mealType').value;
+            const quantity = parseFloat(document.getElementById('quantity').value) || 1;
+            const today = new Date().toISOString().split('T')[0];
+            data.nutrition.push({
+                id: Date.now().toString(),
+                clientId: '1',
+                date: today,
+                meal: currentFood.name,
+                mealType: mealType,
+                calories: Math.round(currentFood.calories * quantity),
+                protein: Math.round(currentFood.protein * quantity),
+                carbs: Math.round(currentFood.carbs * quantity),
+                fat: Math.round(currentFood.fat * quantity)
+            });
+            saveData(data);
+            alert('✓ Added to ' + mealType);
+            cancelFood();
+            renderClientTab('nutrition');
+        }
+
+        function cancelFood() {
+            currentFood = null;
+            document.getElementById('foodSearch').value = '';
+            document.getElementById('searchResult').classList.add('hidden');
+            document.getElementById('mealTypeCard').classList.add('hidden');
+        }
+
+        function deleteMeal(mealId) {
+            const data = getData();
+            data.nutrition = data.nutrition.filter(m => m.id !== mealId);
+            saveData(data);
+            renderClientTab('nutrition');
+        }
+
+        function logSteps() {
+            const steps = parseInt(document.getElementById('stepsInput').value);
+            if (!steps) { alert('Enter steps'); return; }
+            const data = getData();
+            const today = new Date().toISOString().split('T')[0];
+            const existing = data.steps.find(s => s.clientId === '1' && s.date === today);
+            if (existing) {
+                existing.steps = steps;
+            } else {
+                data.steps.push({ id: Date.now().toString(), clientId: '1', date: today, steps });
+            }
+            saveData(data);
+            alert('✓ Steps logged');
+        }
+
+        function logWeight() {
+            const weight = document.getElementById('weightInput').value;
+            if (!weight) { alert('Enter weight'); return; }
+            const data = getData();
+            data.weight.push({ id: Date.now().toString(), clientId: '1', date: new Date().toISOString().split('T')[0], weight });
+            saveData(data);
+            alert('✓ Weight logged');
+        }
+
+        initData();
+        showLogin();
+    </script>
+</body>
+</html>
